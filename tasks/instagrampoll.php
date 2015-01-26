@@ -60,6 +60,8 @@ class InstagramPoll
 
 	public function subscriptions()
 	{
+		try {
+
 		$account = \Propeller\Instagram\Model_Account::query()
 				->where('active', 1)
 				->get_one();
@@ -78,15 +80,13 @@ class InstagramPoll
 			$count = 0;
 			
 			foreach($media as $med) {
-
+				
 				$image = \DB::select('instagram_id')
 					->from(\Propeller\Instagram\Model_Image::table())
 					->where('instagram_id', $med->id)
 					->execute()
 					->as_array('instagram_id', null);
 										
-				try
-				{
 					$ch = curl_init();
 					curl_setopt($ch, CURLOPT_URL, $med->images->standard_resolution->url);
 					curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -147,7 +147,18 @@ class InstagramPoll
 
 						$count++;
 					}				
-				}
+						
+			}
+
+			if($count) {
+				$sub->last_image_received = time();
+				$sub->save();
+			}
+
+			\Cli::write($count ? $count.' updates for tag: '.$sub->object_id : 'No updates for tag: '.$sub->object_id, 'green');
+
+		}
+			}
 				catch (ImageAccessDeindedException $e)
 				{
 					\Cli::write("Attempting to delete image", "cyan");
@@ -175,17 +186,7 @@ class InstagramPoll
 					\Log::error($e->getMessage()); 	
 					
 					\Cli::error("Uknown error: " . $e->getMessage());
-				}				
-			}
-
-			if($count) {
-				$sub->last_image_received = time();
-				$sub->save();
-			}
-
-			\Cli::write($count ? $count.' updates for tag: '.$sub->object_id : 'No updates for tag: '.$sub->object_id, 'green');
-
-		}
+				}	
 	}
 }
 
