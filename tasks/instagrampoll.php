@@ -156,7 +156,7 @@ class InstagramPoll
 				$image->link = $med->link;
 				$image->accepted = 'unsorted';
 				$image->subscription_id = $sub->instagram_subscription_id;
-				$image->caption = $med->caption->text;
+				$image->caption = $med->caption ? $med->caption->text : '';
 
 				$image->save();
 
@@ -204,6 +204,7 @@ class InstagramPoll
 				}
 				catch(\Exception $e)
 				{
+					\Log::error(sprintf("Unable to delete image: %s [tag = %s, id = %s]", $e->getMessage(), $sub->object_id, $med->id), __METHOD__);
 					\Cli::error("Unable to delete image: " . $e->getMessage());
 				}
 			}
@@ -211,9 +212,8 @@ class InstagramPoll
 		catch(\Exception $e)
 		{
 			// Some other error
-			\Log::error($e->getMessage(), __METHOD__);
-
-			\Cli::error("Uknown error: " . $e->getMessage());
+			\Log::error(sprintf("%s [tag = %s, id = %s]", $e->getMessage(), $sub->object_id, $med->id), __METHOD__);
+			\Cli::error("Unknown error: " . $e->getMessage());
 		}
 	}
 
