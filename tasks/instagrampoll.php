@@ -29,7 +29,7 @@ class InstagramPoll
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 				$output = curl_exec($ch);
 				$curl_info = curl_getinfo($ch);
-				curl_close($ch);					
+				curl_close($ch);
 
 				if($curl_info['http_code'] == 404)
 				{
@@ -61,13 +61,16 @@ class InstagramPoll
 	/**
 	 * Get list of recently tagged media
 	 *
-	 * Use --all option to get all tagged media.
-	 *
 	 * @param string $tag Tag name
 	 */
 	public function subscriptions($tag = null)
 	{
-		$get_all = \Cli::option('all', false);
+		$limit = \Cli::option('limit', 20);
+		if ( ! is_numeric($limit) OR 0 > $limit) {
+			\Cli::error('Limit must be greater than zero, or 0 for all');
+			return false;
+		}
+
 
 		$account = \Propeller\Instagram\Model_Account::query()
 				->where('active', 1)
@@ -96,11 +99,13 @@ class InstagramPoll
 					if (static::add_media($med, $sub)) {
 						$count++;
 					}
+
+					if ($limit AND $limit <= $count) {
+						break 2;
+					}
 				}
 
-				if ($get_all) {
-					$params['max_tag_id'] = $media->getNextMaxTagId();
-				}
+				$params['max_tag_id'] = $media->getNextMaxTagId();
 			} while ($params['max_tag_id']);
 
 
@@ -128,7 +133,7 @@ class InstagramPoll
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			$output = curl_exec($ch);
 			$content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-			curl_close($ch);	
+			curl_close($ch);
 
 			if($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output))
 			{
@@ -170,7 +175,7 @@ class InstagramPoll
 					$tag_model->save();
 				}
 
-				//Save Tags 
+				//Save Tags
 				$image->tags[] = $tag_model;
 
 			}
