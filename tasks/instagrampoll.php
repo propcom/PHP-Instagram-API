@@ -29,7 +29,7 @@ class InstagramPoll
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 				$output = curl_exec($ch);
 				$curl_info = curl_getinfo($ch);
-				curl_close($ch);					
+				curl_close($ch);
 
 				if($curl_info['http_code'] == 404)
 				{
@@ -115,6 +115,17 @@ class InstagramPoll
 		}
 	}
 
+	protected static function remove_emoticons_and_symbols($string)
+	{
+			$emoticons = '/[\x{1F600}-\x{1F64F}]/u';
+			$string = preg_replace($emoticons, '', $string);
+
+			$symbols = '/[\x{1F300}-\x{1F5FF}]/u';
+			$string = preg_replace($symbols, '', $string);
+
+			return $string;
+	}
+
 	protected static function add_media($med, $sub)
 	{
 		$image = \Propeller\Instagram\Model_Image::query()
@@ -128,7 +139,7 @@ class InstagramPoll
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			$output = curl_exec($ch);
 			$content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-			curl_close($ch);	
+			curl_close($ch);
 
 			if($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output))
 			{
@@ -155,7 +166,7 @@ class InstagramPoll
 			$image->author = $med->user->username;
 			$image->link = $med->link;
 			$image->subscription_id = $sub->id;
-			$image->caption = $med->caption ? $med->caption->text : '';
+			$image->caption = $med->caption ? self::remove_emoticons_and_symbols($med->caption->text) : '';
 			$image->tags = [];
 			$image->likes = $med->getLikesCount();
 			$image->posted_at = $med->getCreatedTime();
@@ -173,7 +184,7 @@ class InstagramPoll
 					$tag_model->save();
 				}
 
-				//Save Tags 
+				//Save Tags
 				$image->tags[] = $tag_model;
 
 			}
