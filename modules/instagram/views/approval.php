@@ -38,7 +38,17 @@
     <div class="tab-pane" id="approved">
       <div class="row images-container">
 			<? foreach($accepted_images as $image): ?>
+		  <div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">
+			  <div style="clear: both; display: block; width: 100%;">
 				<img class="span2 instagram-img accepted" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
+			  </div>
+
+			  <div style="clear: both; display: block; width: 100%;">
+				  <p class="image-caption" style="display: none">
+					  <?= $image['caption']; ?>
+				  </p>
+			  </div>
+		  </div>
 			<? endforeach ?>
 		</div>
       	<input type="hidden" name="approved_image_count" value="<?= isset($image_counts['accepted']) ? $image_counts['accepted'] : 0 ?>">
@@ -46,7 +56,17 @@
     <div class="tab-pane" id="rejected">
       <div class="row images-container">
 			<? foreach($declined_images as $image): ?>
+		  <div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">
+			  <div style="clear: both; display: block; width: 100%;">
 				<img class="span2 instagram-img declined" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
+			  </div>
+
+			  <div style="clear: both; display: block; width: 100%;">
+				  <p class="image-caption" style="display: none">
+					  <?= $image['caption']; ?>
+				  </p>
+			  </div>
+		  </div>
 			<? endforeach ?>
 		</div>
       <input type="hidden" name="rejected_image_count" value="<?= isset($image_counts['declined']) ? $image_counts['declined'] : 0 ?>">
@@ -132,9 +152,8 @@
 
 				var $caption = $container.find('.image-caption').clone();
 
-				if($img.hasClass('unsorted')) {
-					html.append($caption.show());
-				}
+
+				html.append($caption.show());
 
 				if(!$img.hasClass('accepted')) {
 					html.append($('<a>Approve</a>').attr({
