@@ -18,17 +18,37 @@
   </ul>
   <div class="tab-content">
     <div class="tab-pane active" id="unsorted">
-      <div class="row images-container">
-			<? foreach($unsorted_images as $image): ?>
-				<img class="span2 instagram-img unsorted" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
-			<? endforeach ?>
-		</div>
+      <div class="images-container">
+		  <? foreach($unsorted_images as $image): ?>
+			  <div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">
+				  <div style="clear: both; display: block; width: 100%;">
+					  <img class="instagram-img unsorted" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
+				  </div>
+
+				  <div style="clear: both; display: block; width: 100%;">
+					  <p class="image-caption" style="display: none">
+						  <?= $image['caption']; ?>
+					  </p>
+				  </div>
+			  </div>
+		  <? endforeach ?>
+	  </div>
 		<input type="hidden" name="unsorted_image_count" value="<?= isset($image_counts['unsorted']) ? $image_counts['unsorted'] : 0 ?>">
     </div>
     <div class="tab-pane" id="approved">
       <div class="row images-container">
 			<? foreach($accepted_images as $image): ?>
+		  <div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">
+			  <div style="clear: both; display: block; width: 100%;">
 				<img class="span2 instagram-img accepted" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
+			  </div>
+
+			  <div style="clear: both; display: block; width: 100%;">
+				  <p class="image-caption" style="display: none">
+					  <?= $image['caption']; ?>
+				  </p>
+			  </div>
+		  </div>
 			<? endforeach ?>
 		</div>
       	<input type="hidden" name="approved_image_count" value="<?= isset($image_counts['accepted']) ? $image_counts['accepted'] : 0 ?>">
@@ -36,7 +56,17 @@
     <div class="tab-pane" id="rejected">
       <div class="row images-container">
 			<? foreach($declined_images as $image): ?>
+		  <div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">
+			  <div style="clear: both; display: block; width: 100%;">
 				<img class="span2 instagram-img declined" data-image-id="<?= $image['id'] ?>" style="margin-bottom: 15px;" src="<?= $image['thumb_img'] ?>" />
+			  </div>
+
+			  <div style="clear: both; display: block; width: 100%;">
+				  <p class="image-caption" style="display: none">
+					  <?= $image['caption']; ?>
+				  </p>
+			  </div>
+		  </div>
 			<? endforeach ?>
 		</div>
       <input type="hidden" name="rejected_image_count" value="<?= isset($image_counts['declined']) ? $image_counts['declined'] : 0 ?>">
@@ -118,6 +148,13 @@
 			{
 				var html = $('<div></div>');
 
+				var $container = $img.closest('.instagram-img-container');
+
+				var $caption = $container.find('.image-caption').clone();
+
+
+				html.append($caption.show());
+
 				if(!$img.hasClass('accepted')) {
 					html.append($('<a>Approve</a>').attr({
 					'href' : '#',
@@ -133,6 +170,7 @@
 					'data-image-id' : $img.attr('data-image-id')
 					}).addClass('btn post-image-status'));
 				}
+
 
 				return html;
 			}
