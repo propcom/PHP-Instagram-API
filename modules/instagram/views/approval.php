@@ -110,11 +110,19 @@
 						iterations[current_tab]++;
 
 						$.post('/admin/instagram/ajax/more.json', {'offset' : offset, 'subscription' : sub_id, 'status': status}, function(data){
-							$.each(data.images, function(index, img){
-								$(current_tab).find('.images-container').append($('<img>').attr({
-									'src' : img.thumb_img,
-									'data-image-id' : img.id
-								}).addClass('span2 instagram-img unsorted'));
+              $.each(data.images, function(index, img){
+
+                html = [
+                  '<div class="instagram-img-container" style="display: block; width: 23%; float: left; padding: 0 10px 0 0">',
+                  '<div style="clear: both; display: block; width: 100%;">',
+                  '<img class="instagram-img unsorted" data-image-id="' + img.id + '" style="margin-bottom: 15px;" src="' + img.thumb_img + '" />',
+                  '</div>',
+                  '<div style="clear: both; display: block; width: 100%;">',
+                  '<p class="image-caption" style="display: none">' + (img.caption ? img.caption : '') + '</p>',
+                  '</div>'
+                ];
+								$(current_tab).find('.images-container').append(html.join(''));
+
 							});
 						});
 					}
@@ -194,7 +202,7 @@
 				});
 
 			}
-			
+
 			$('.post-image-status').live('click', function(e){
 
 				e.preventDefault();
@@ -204,7 +212,7 @@
 				var image_id = $this.attr('data-image-id');
 
 				$.post('/admin/instagram/ajax/status.json', {
-					'status' : status, 
+					'status' : status,
 					'image' : $this.attr('data-image-id')
 				}, function(data){
 					current_tab = $('.nav-tabs .active a').attr('href');
@@ -253,4 +261,3 @@
 
 		});
 </script>
-
