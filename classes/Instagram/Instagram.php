@@ -144,13 +144,14 @@ class Instagram extends \Instagram\Core\BaseObjectAbstract {
      * @return \Instagram\Tag
      * @access public
      */
-    public function getTag( $tag ) {
+    public function getTag( $tag ){
         $tag = new Tag( $this->proxy->getTag( $tag ), $this->proxy );
         return $tag;
     }
 
-	public function getHashtag( $tag ) {
-		$tag = new Tag( $this->proxy->getHashtag( $tag ), $this->proxy );
+	public function getHashtag($tag)
+	{
+		$tag = new Tag($this->proxy->getHashtag($tag), $this->proxy);
 		return $tag;
 	}
 

@@ -14,8 +14,7 @@ return array(
 	'api_url_new'       => 'https://api.social.salient.aws.prop.cm/instagram',
 	'api_header'        => 'X-APP-KEY:Eo.L#A/4KX5OlshGY+[1eO$U{OB/#,%iHb@bmkQje*|^tv>C#umi~D+":pjmY(t',
 
-
-/**
+	/**
 	 * Change the place for the defaul nav to be placed.
 	 */
 	'nav' => 'Your CMS',
@@ -24,5 +23,4 @@ return array(
 	 * Set to true to auto approve submissions
 	 */
 	'auto_approve' => false,
-
 );
