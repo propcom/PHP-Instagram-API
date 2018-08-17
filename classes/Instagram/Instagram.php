@@ -149,6 +149,11 @@ class Instagram extends \Instagram\Core\BaseObjectAbstract {
         return $tag;
     }
 
+	public function getHashtag( $tag ) {
+		$tag = new Tag( $this->proxy->getHashtag( $tag ), $this->proxy );
+		return $tag;
+	}
+
     /**
      * Get location
      *

@@ -4,7 +4,6 @@ namespace Fuel\Tasks;
 
 class InstagramPoll
 {
-
 	public function cleanup()
 	{
 		$account = \Propeller\Instagram\Model_Account::query()
@@ -84,7 +83,7 @@ class InstagramPoll
 
 		foreach($query->get() as $sub)
 		{
-			$tag = $instagram->getTag($sub->object_id);
+			$tag = $instagram->getHashtag($sub->object_id);
 			$count = 0;
 			$params = [
 				'max_tag_id' => null,
@@ -102,7 +101,6 @@ class InstagramPoll
 					$params['max_tag_id'] = $media->getNextMaxTagId();
 				}
 			} while ($params['max_tag_id']);
-
 
 			if($count) {
 				$sub->last_image_received = time();
