@@ -8,7 +8,6 @@ class Controller_Manage extends \Admin\Controller_Template
 	public function before()
 	{
 		parent::before();
-		\Config::load('instagram', true);
 	}
 
 	public function action_approval($id)

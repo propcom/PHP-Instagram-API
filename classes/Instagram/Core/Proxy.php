@@ -43,13 +43,21 @@ class Proxy {
 	protected $client_id = null;
 
 	/**
+	 * Client ID for proxy calls
+	 *
+	 * @var string
+	 * @access protected
+	 */
+	protected $client_id_proxy = null;
+
+	/**
 	 * API URL
 	 *
 	 * @var string
 	 * @access protected
 	 */
 	protected $api_url;
-	protected $api_url_new;
+	protected $api_url_proxy;
 	protected $api_header;
 
 	/**
@@ -59,12 +67,14 @@ class Proxy {
 	 * @param string $access_token The access token from authentication
 	 * @access public
 	 */
-	public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null ) {
+	public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null )
+	{
 		$this->client = $client;
 		$this->access_token = $access_token;
 		$this->api_url = \Config::get('instagram.api_url');
-		$this->api_url_new = \Config::get('instagram.api_url_new');
-		$this->client_id = \Config::get('instagram.auth.client_id_new');
+		$this->api_url_proxy = \Config::get('instagram.api_url_proxy');
+		$this->client_id = \Config::get('instagram.auth.client_id');
+		$this->client_id_proxy = \Config::get('instagram.auth.client_id_proxy');
 		$this->api_header = \Config::get('instagram.api_header');
 	}
 
@@ -103,6 +113,16 @@ class Proxy {
 	}
 
 	/**
+	 * Set the client ID for proxy calls
+	 *
+	 * @param string $client_id the client ID
+	 * @access public
+	 */
+	public function setClientIDProxy( $client_id ) {
+		$this->client_id_proxy = $client_id;
+	}
+
+	/**
 	 * Logout of instagram
 	 *
 	 * This hasn't been implemented by instagram yet
@@ -126,10 +146,11 @@ class Proxy {
 	 * @throws APIException
 	 * @access protected
 	 */
-	protected function getObjectMedia( $api_endpoint, $id, array $params = null ) {
-		$response = $this->apiCallNew(
+	protected function getObjectMedia($api_endpoint, $id, array $params = null)
+	{
+		$response = $this->apiCallProxy(
 			'get',
-			sprintf( '%s/%s/%s/%s', $this->api_url_new, $this->client_id, strtolower( $api_endpoint ), $id  )
+			sprintf('%s/%s/%s/%s', $this->api_url_proxy, $this->client_id_proxy, strtolower( $api_endpoint ), $id)
 		);
 		return $response->getRawData();
 	}
@@ -154,7 +175,8 @@ class Proxy {
 	 * @return StdClass Returns the location media
 	 * @access public
 	 */
-	public function getTagMedia( $id, array $params = null ) {
+	public function getTagMedia($id, array $params = null)
+	{
 		return $this->getObjectMedia( 'hashtag', $id, $params );
 	}
 
@@ -285,19 +307,21 @@ class Proxy {
 	 * @return StdClass Returns the tag data
 	 * @access public
 	 */
-	public function getTag( $tag ) {
+	public function getTag($tag) {
 		$response = $this->apiCall(
 			'get',
-			sprintf( '%s/tags/%s', $this->api_url, $tag )
+			sprintf('%s/tags/%s', $this->api_url, $tag)
 		);
 		return $response->getData();
 	}
 
-	public function getHashtag( $tag ) {
+	public function getHashtag($tag)
+	{
 		$return_tag = new \stdClass();
 		$return_tag->name = $tag;
 		return $return_tag;
 	}
+
 	/**
 	 * Get location
 	 *
@@ -554,18 +578,14 @@ class Proxy {
 
 		$response = new \Instagram\Net\ApiResponse( $raw_response );
 
-		if ( !$response->isValid() ) {
-			if ( $throw_exception ) {
-				if ( $response->getErrorType() == 'OAuthAccessTokenException' ) {
-					throw new \Instagram\Core\ApiAuthException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
+		if (!$response->isValid()) {
+			if ($throw_exception) {
+				if ($response->getErrorType() == 'OAuthAccessTokenException') {
+					throw new \Instagram\Core\ApiAuthException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
 				}
-				else {
-					throw new \Instagram\Core\ApiException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
-				}
+				throw new \Instagram\Core\ApiException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
 			}
-			else {
-				return false;
-			}
+			return false;
 		}
 		return $response;
 	}
@@ -575,35 +595,32 @@ class Proxy {
 	 *
 	 * @param string $method HTTP method to use
 	 * @param string $url URL
-	 * @param boolean $throw_exception True to throw exceptoins
+	 * @param boolean $throw_exception True to throw exceptions
 	 * @throws APIException, APIAuthException
 	 * @return  \Instagram\Net\ApiResponse Returns teh API response
 	 * @access private
 	 */
-	private function apiCallNew( $method = 'GET', $url, $throw_exception = true ){
+	private function apiCallProxy($method = 'GET', $url, $throw_exception = true)
+	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_POST, $method);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array($this->api_header));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $this->api_header);
 
 		$raw_response = curl_exec($ch);
 		curl_close($ch);
 
 		$response = new \Instagram\Net\ApiResponse( $raw_response );
 
-		if ( !$response->isValid() ) {
-			if ( $throw_exception ) {
-				if ( $response->getErrorType() == 'OAuthAccessTokenException' ) {
-					throw new \Instagram\Core\ApiAuthException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
+		if (!$response->isValid()) {
+			if ($throw_exception) {
+				if ($response->getErrorType() == 'OAuthAccessTokenException') {
+					throw new \Instagram\Core\ApiAuthException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
 				}
-				else {
-					throw new \Instagram\Core\ApiException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
-				}
+				throw new \Instagram\Core\ApiException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
 			}
-			else {
-				return false;
-			}
+			return false;
 		}
 		return $response;
 	}

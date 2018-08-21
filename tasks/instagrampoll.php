@@ -144,7 +144,6 @@ class InstagramPoll
 			if(!$image) {
 				$image = \Propeller\Instagram\Model_Image::forge();
 
-				\Config::load('instagram', true);
 				$approval_status = 'unsorted';
 				if (\Config::get('instagram.auto_approve', false)) {
 					$approval_status = 'accepted';

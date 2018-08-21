@@ -3,8 +3,6 @@
 \Package::load('admin');
 \Module::load('admin');
 
-\Config::load('instagram', true);
-
 $count = \DB::select(\DB::expr('COUNT(*) as count'))
 	->from('instagram__subscription')
 	->where('last_image_received', '>', \DB::expr('last_managed'))
