@@ -603,9 +603,16 @@ class Proxy {
 		if (!$response->isValid()) {
 			if ($throw_exception) {
 				if ($response->getErrorType() == 'OAuthAccessTokenException') {
-					throw new \Instagram\Core\ApiAuthException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
+					throw new \Instagram\Core\ApiAuthException($response->getErrorMessage(),
+						$response->getErrorCode(),
+						$response->getErrorType()
+					);
 				}
-				throw new \Instagram\Core\ApiException($response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType());
+				throw new \Instagram\Core\ApiException(
+					$response->getErrorMessage(),
+					$response->getErrorCode(),
+					$response->getErrorType()
+				);
 			}
 			return false;
 		}
@@ -644,12 +651,14 @@ class Proxy {
 					throw new \Instagram\Core\ApiAuthException(
 						$response->getErrorMessage(),
 						$response->getErrorCode(),
-						$response->getErrorType());
+						$response->getErrorType()
+					);
 				}
 				throw new \Instagram\Core\ApiException(
 					$response->getErrorMessage(),
 					$response->getErrorCode(),
-					$response->getErrorType());
+					$response->getErrorType()
+				);
 			}
 			return false;
 		}
