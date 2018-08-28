@@ -13,8 +13,8 @@ return array(
 	'api_url'           => 'https://api.instagram.com/v1',
 	'api_url_proxy'     => 'https://api.social.salient.aws.prop.cm/instagram',
 
-	'api_header' => array(
-		'X-APP-KEY:Eo.L#A/4KX5OlshGY+[1eO$U{OB/#,%iHb@bmkQje*|^tv>C#umi~D+":pjmY(t',
+	'api_headers' => array(
+		'X-APP-KEY' => 'Eo.L#A/4KX5OlshGY+[1eO$U{OB/#,%iHb@bmkQje*|^tv>C#umi~D+":pjmY(t',
 	),
 
 	/**
