@@ -69,7 +69,7 @@ class Proxy {
     /**
      * API HEADERS
      *
-     * @var string array
+     * @var array
      * @access protected
      */
     protected $api_headers;
@@ -81,7 +81,7 @@ class Proxy {
      * @param string $access_token The access token from authentication
      * @access public
      */
-    public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null )
+    public function __construct(\Instagram\Net\ClientInterface $client, $access_token = null)
     {
         $this->client = $client;
         $this->access_token = $access_token;
@@ -635,11 +635,17 @@ class Proxy {
             $method = 'GET';
         }
 
+        $headers = array();
+        foreach ($this->api_headers as $key => $value)
+        {
+            array_push($headers, $key . ':' . $value);
+        }
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, $method);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('X-APP-KEY:' . $this->api_headers['X-APP-KEY']));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $raw_response = curl_exec($ch);
         curl_close($ch);
 
