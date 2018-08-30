@@ -18,7 +18,6 @@ class Subscription
 
 	public static function forge($alias, $params)
 	{
-		\Config::load('instagram', true);
 		$config = \Config::get('instagram.auth');
 		$guid = uniqid();
 
@@ -75,7 +74,6 @@ class Subscription
 
 	public static function cancel($id)
 	{
-		\Config::load('instagram', true);
 		$config = \Config::get('instagram.auth');
 
 		$params = array(
@@ -91,7 +89,6 @@ class Subscription
 
 	public static function get()
 	{
-		\Config::load('instagram', true);
 		$config = \Config::get('instagram.auth');
 
 		$params = array(

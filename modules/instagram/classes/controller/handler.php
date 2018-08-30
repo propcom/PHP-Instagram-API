@@ -6,8 +6,6 @@ class Controller_Handler extends \Controller
 {
 	public function action_subscribe()
 	{
-
-		\Config::load('instagram', true);
 		$auth = new \Instagram\Auth( \Config::get('instagram.auth') );
 
 		if($challenge = \Input::get('hub_challenge')) {

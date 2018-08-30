@@ -144,10 +144,25 @@ class Instagram extends \Instagram\Core\BaseObjectAbstract {
      * @return \Instagram\Tag
      * @access public
      */
-    public function getTag( $tag ) {
-        $tag = new Tag( $this->proxy->getTag( $tag ), $this->proxy );
-        return $tag;
+    public function getTag($tag)
+    {
+        return new Tag($this->proxy->getTag($tag), $this->proxy);
     }
+
+    /**
+     * Get Tag
+     *
+     * Returns object object of type Tag containg only name of tag. Doesn't fetc hany information from Instagram API.
+     * Created in terms of using Proxy API endpoint.
+     *
+     * @param string $tag Tag to retrieve
+     * @return \Instagram\Tag
+     * @access public
+     */
+	public function getHashtag($tag)
+	{
+		return new Tag($this->proxy->getHashtag($tag), $this->proxy);
+	}
 
     /**
      * Get location

@@ -8,7 +8,6 @@ class Controller_Manage extends \Admin\Controller_Template
 	public function before()
 	{
 		parent::before();
-		\Config::load('instagram', true);
 	}
 
 	public function action_approval($id)
@@ -117,25 +116,8 @@ class Controller_Manage extends \Admin\Controller_Template
 
 		$view = \View::forge('manage');
 		$view->set('fieldset', \Propeller\Instagram\Subscription::fieldset(), false);
-		$subscriptions = \Propeller\Instagram\Subscription::get();
-		$prop_sub = \Propeller\Instagram\Model_Subscription::find('all');
-		$merged = array();
-
-		if($prop_sub) {
-			foreach($prop_sub as $subscription) {
-				$merged[$subscription->object_id] = $subscription;
-			}
-
-			foreach($subscriptions as $subscription) {
-				$key = str_replace('#', '', $subscription->object_id);
-				if(isset($merged[$key])) {
-					$merged[$key]->instagram = $subscription;
-				}
-			}
-		}
-
-		$view->set('subscriptions', $merged);
-
+		$subscriptions = \Propeller\Instagram\Model_Subscription::find('all');
+		$view->set('subscriptions', $subscriptions);
 
 		$this->template->title = 'Instagram';
 		$this->template->content = $view;

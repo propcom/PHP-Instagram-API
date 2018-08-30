@@ -1,10 +1,10 @@
 <?php
 
 /**
-* Instagram PHP
-* @author Galen Grover <galenjr@gmail.com>
-* @license http://opensource.org/licenses/mit-license.php The MIT License
-*/
+ * Instagram PHP
+ * @author Galen Grover <galenjr@gmail.com>
+ * @license http://opensource.org/licenses/mit-license.php The MIT License
+ */
 
 namespace Instagram\Core;
 
@@ -14,13 +14,13 @@ namespace Instagram\Core;
  * This class performs all the API calls
  *
  * It uses the supplied HTTP client as a default (cURL)
- * 
+ *
  */
 class Proxy {
 
     /**
      * HTTP Client
-     * 
+     *
      * @var \Instagram\Net\ClientInterface
      * @access protected
      */
@@ -28,7 +28,7 @@ class Proxy {
 
     /**
      * Instagram access token
-     * 
+     *
      * @var string
      * @access protected
      */
@@ -36,19 +36,43 @@ class Proxy {
 
     /**
      * Client ID
-     * 
+     *
      * @var string
      * @access protected
      */
     protected $client_id = null;
 
     /**
-     * API URL
-     * 
+     * Client ID for proxy calls
+     *
      * @var string
      * @access protected
      */
-    protected $api_url = 'https://api.instagram.com/v1';
+    protected $client_id_proxy = null;
+
+    /**
+     * API URL
+     *
+     * @var string
+     * @access protected
+     */
+    protected $api_url;
+
+    /**
+     * API PROXY URL
+     *
+     * @var string
+     * @access protected
+     */
+    protected $api_url_proxy;
+
+    /**
+     * API HEADERS
+     *
+     * @var array
+     * @access protected
+     */
+    protected $api_headers;
 
     /**
      * Constructor
@@ -57,9 +81,15 @@ class Proxy {
      * @param string $access_token The access token from authentication
      * @access public
      */
-    public function __construct( \Instagram\Net\ClientInterface $client, $access_token = null ) {
+    public function __construct(\Instagram\Net\ClientInterface $client, $access_token = null)
+    {
         $this->client = $client;
         $this->access_token = $access_token;
+        $this->api_url = \Config::get('instagram.api_url');
+        $this->api_url_proxy = \Config::get('instagram.api_url_proxy');
+        $this->client_id = \Config::get('instagram.auth.client_id');
+        $this->client_id_proxy = \Config::get('instagram.auth.client_id_proxy');
+        $this->api_headers = \Config::get('instagram.api_headers', array());
     }
 
     /**
@@ -78,7 +108,7 @@ class Proxy {
 
     /**
      * Set the access token
-     * 
+     *
      * @param string $access_token The access token
      * @access public
      */
@@ -88,7 +118,7 @@ class Proxy {
 
     /**
      * Set the client ID
-     * 
+     *
      * @param string $client_id the client ID
      * @access public
      */
@@ -97,10 +127,21 @@ class Proxy {
     }
 
     /**
+     * Set the client ID for proxy calls
+     *
+     * @param string $client_id the client ID
+     * @access public
+     */
+    public function setClientIDProxy($client_id)
+    {
+        $this->client_id_proxy = $client_id;
+    }
+
+    /**
      * Logout of instagram
      *
      * This hasn't been implemented by instagram yet
-     * 
+     *
      * @access public
      */
     public function logout() {
@@ -112,25 +153,26 @@ class Proxy {
      *
      * This function is used by the individual object functions
      * getLocationMedia, getTagMedia, atc...
-     * 
+     *
      * @param  string $api_endpoint API endpoint for the object type
      * @param  string $id Id of the object to get the media for
      * @param  array $params Extra parameters for the API call
      * @return StdClass Returns the raw response
+     * @throws APIException
      * @access protected
      */
-    protected function getObjectMedia( $api_endpoint, $id, array $params = null ) {
-        $response = $this->apiCall(
-            'get',
-            sprintf( '%s/%s/%s/media/recent', $this->api_url, strtolower( $api_endpoint ), $id  ),
-            $params
+    protected function getObjectMedia($api_endpoint, $id, array $params = null)
+    {
+        $response = $this->apiCallProxy(
+            'GET',
+            sprintf('%s/%s/%s/%s', $this->api_url_proxy, $this->client_id_proxy, strtolower($api_endpoint), $id)
         );
         return $response->getRawData();
     }
 
     /**
      * Get location media
-     * 
+     *
      * @param string $id Location ID
      * @param array $params Extra params to pass to the API
      * @return StdClass Returns the location media
@@ -142,19 +184,20 @@ class Proxy {
 
     /**
      * Get tag media
-     * 
+     *
      * @param string $id Location ID
      * @param array $params Extra params to pass to the API
      * @return StdClass Returns the location media
      * @access public
      */
-    public function getTagMedia( $id, array $params = null ) {
-        return $this->getObjectMedia( 'Tags', $id, $params );
+    public function getTagMedia($id, array $params = null)
+    {
+        return $this->getObjectMedia('hashtag', $id, $params);
     }
 
     /**
      * Get user media
-     * 
+     *
      * @param string $id Location ID
      * @param array $params Extra params to pass to the API
      * @return StdClass Returns the location media
@@ -166,7 +209,7 @@ class Proxy {
 
     /**
      * Get user
-     * 
+     *
      * @param string $id User ID
      * @return StdClass Returns the user data
      * @access public
@@ -181,7 +224,7 @@ class Proxy {
 
     /**
      * Get a user's follows
-     * 
+     *
      * @param string $id User's ID
      * @param array $params Extra params to pass to the API
      * @return StdClass Returns the user's followers
@@ -198,7 +241,7 @@ class Proxy {
 
     /**
      * Get a user's followers
-     * 
+     *
      * @param string $id User's ID
      * @param array $params Extra params to pass to the API
      * @return StdClass Returns the user's followers
@@ -215,7 +258,7 @@ class Proxy {
 
     /**
      * Get media comments
-     * 
+     *
      * @param string $id Media ID
      * @return StdClass Returns the media data
      * @access public
@@ -230,7 +273,7 @@ class Proxy {
 
     /**
      * Get media likes
-     * 
+     *
      * @param string $id Media ID
      * @return StdClass Returns the media likes
      * @access public
@@ -245,7 +288,7 @@ class Proxy {
 
     /**
      * Get media comments
-     * 
+     *
      * @return StdClass Returns the current user data
      * @access public
      */
@@ -259,7 +302,7 @@ class Proxy {
 
     /**
      * Get media
-     * 
+     *
      * @param string $id Media ID
      * @return StdClass Returns the media data
      * @access public
@@ -274,22 +317,36 @@ class Proxy {
 
     /**
      * Get tag
-     * 
-     * @param string $id Tag ID
+     *
+     * @param string $tag Tag ID
      * @return StdClass Returns the tag data
      * @access public
      */
-    public function getTag( $tag ) {
+    public function getTag($tag) {
         $response = $this->apiCall(
             'get',
-            sprintf( '%s/tags/%s', $this->api_url, $tag )
+            sprintf('%s/tags/%s', $this->api_url, $tag)
         );
         return $response->getData();
     }
 
     /**
+     * Get tag
+     *
+     * @param string $tag Tag ID
+     * @return StdClass Returns object of type Tag
+     * @access public
+     */
+    public function getHashtag($tag)
+    {
+        $return_tag = new \stdClass();
+        $return_tag->name = $tag;
+        return $return_tag;
+    }
+
+    /**
      * Get location
-     * 
+     *
      * @param string $id Location ID
      * @return StdClass Returns the location data
      * @access public
@@ -304,7 +361,7 @@ class Proxy {
 
     /**
      * Search users
-     * 
+     *
      * @param array $params Search params
      * @return array Returns an array of user data
      * @access public
@@ -320,7 +377,7 @@ class Proxy {
 
     /**
      * Search tags
-     * 
+     *
      * @param array $params Search params
      * @return array Returns an array of tag data
      * @access public
@@ -336,7 +393,7 @@ class Proxy {
 
     /**
      * Search media
-     * 
+     *
      * @param array $params Search params
      * @return array Returns an array of media data
      * @access public
@@ -352,7 +409,7 @@ class Proxy {
 
     /**
      * Search locations
-     * 
+     *
      * @param array $params Search params
      * @return array Returns an array of location data
      * @access public
@@ -368,7 +425,7 @@ class Proxy {
 
     /**
      * Get popular media
-     * 
+     *
      * @param array $params Extra params
      * @return array Returns an array of popular media data
      * @access public
@@ -384,7 +441,7 @@ class Proxy {
 
     /**
      * Get the current user's feed
-     * 
+     *
      * @param array $params Extra params
      * @return array Returns an array of media data
      * @access public
@@ -400,7 +457,7 @@ class Proxy {
 
     /**
      * Get the current users follow requests
-     * 
+     *
      * @param $params Extra params (not used in API, here in case it's added)
      * @return array Returns an array of user data
      * @access public
@@ -416,7 +473,7 @@ class Proxy {
 
     /**
      * Get the current user's liked media
-     * 
+     *
      * @param array $params Extra params
      * @return array Returns an array of media data
      * @access public
@@ -432,7 +489,7 @@ class Proxy {
 
     /**
      * Get a user's relationship to the current user
-     * 
+     *
      * @param string $user_id User to check relationship for
      * @return StdClass Returns the relationship
      * @access public
@@ -463,7 +520,7 @@ class Proxy {
 
     /**
      * Add a like form the current user on a media
-     * 
+     *
      * @param string $media_id Media ID to like
      * @return StdClass Returns the status
      * @access public
@@ -477,7 +534,7 @@ class Proxy {
 
     /**
      * Delete a like form the current user on a media
-     * 
+     *
      * @param string $media_id Media ID to unlike
      * @return StdClass Returns the status
      * @access public
@@ -491,7 +548,7 @@ class Proxy {
 
     /**
      * Add a comment to a media
-     * 
+     *
      * @param string $media_id Media ID
      * @param string $text Comment text
      * @return StdClass Returns the status
@@ -507,7 +564,7 @@ class Proxy {
 
     /**
      * Delete a comment from a media
-     * 
+     *
      * @param string $media_id Media ID
      * @param string $comment_id Comment ID to delete
      * @return StdClass
@@ -522,7 +579,7 @@ class Proxy {
 
     /**
      * Make a call to the API
-     * 
+     *
      * @param string $method HTTP method to use
      * @param string $url URL
      * @param array $params API parameters
@@ -531,33 +588,87 @@ class Proxy {
      * @return  \Instagram\Net\ApiResponse Returns teh API response
      * @access private
      */
-    private function apiCall( $method, $url, array $params = null, $throw_exception = true ){
-
+    private function apiCall($method, $url, array $params = null, $throw_exception = true)
+    {
         $raw_response = $this->client->$method(
             $url,
             array(
                 'access_token'  => $this->access_token,
-                'client_id'     => isset( $params['client_id'] ) ? $params['client_id'] : $this->client_id
+                'client_id'     => isset($params['client_id']) ? $params['client_id'] : $this->client_id
             ) + (array) $params
         );
 
         $response = new \Instagram\Net\ApiResponse( $raw_response );
 
-        if ( !$response->isValid() ) {
-            if ( $throw_exception ) {
-                if ( $response->getErrorType() == 'OAuthAccessTokenException' ) {
-                    throw new \Instagram\Core\ApiAuthException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
+        if (!$response->isValid()) {
+            if ($throw_exception) {
+                if ($response->getErrorType() == 'OAuthAccessTokenException') {
+                    throw new \Instagram\Core\ApiAuthException($response->getErrorMessage(),
+                        $response->getErrorCode(),
+                        $response->getErrorType()
+                    );
                 }
-                else {
-                    throw new \Instagram\Core\ApiException( $response->getErrorMessage(), $response->getErrorCode(), $response->getErrorType() );
-                }
+                throw new \Instagram\Core\ApiException(
+                    $response->getErrorMessage(),
+                    $response->getErrorCode(),
+                    $response->getErrorType()
+                );
             }
-            else {
-                return false;
-            }
+            return false;
         }
         return $response;
     }
 
+    /**
+     * Make a call to the API (use microservice)
+     *
+     * @param string $method HTTP method to use
+     * @param string $url URL
+     * @param boolean $throw_exception True to throw exceptions
+     * @throws APIException, APIAuthException
+     * @return  \Instagram\Net\ApiResponse Returns teh API response
+     * @access private
+     */
+    private function apiCallProxy($method, $url, $throw_exception = true)
+    {
+        if (! $method){
+            $method = 'GET';
+        }
+
+        $headers = array();
+        foreach ($this->api_headers as $key => $value)
+        {
+            array_push($headers, $key . ':' . $value);
+        }
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, $method);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $raw_response = curl_exec($ch);
+        curl_close($ch);
+
+        $response = new \Instagram\Net\ApiResponse($raw_response);
+
+        if (!$response->isValid()) {
+            if ($throw_exception) {
+                if ($response->getErrorType() == 'OAuthAccessTokenException') {
+                    throw new \Instagram\Core\ApiAuthException(
+                        $response->getErrorMessage(),
+                        $response->getErrorCode(),
+                        $response->getErrorType()
+                    );
+                }
+                throw new \Instagram\Core\ApiException(
+                    $response->getErrorMessage(),
+                    $response->getErrorCode(),
+                    $response->getErrorType()
+                );
+            }
+            return false;
+        }
+        return $response;
+    }
 
 }

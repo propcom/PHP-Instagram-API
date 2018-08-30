@@ -44,3 +44,5 @@ Autoloader::add_classes(array(
 		'Instagram\Net\ClientInterface'		=> __DIR__.'/classes/Instagram/Net/ClientInterface.php',
 		'Instagram\Net\CurlClient'			=> __DIR__.'/classes/Instagram/Net/CurlClient.php',
 ));
+
+\Config::load('instagram', true);
