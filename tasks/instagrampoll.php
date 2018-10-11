@@ -92,7 +92,7 @@ class InstagramPoll
 			do {
 				$media = $tag->getMedia($params);
 				foreach($media as $med) {
-					if (static::add_media($med, $sub)) {
+					if ($this->add_media($med, $sub)) {
 						$count++;
 					}
 				}
@@ -113,7 +113,7 @@ class InstagramPoll
 		}
 	}
 
-	protected static function add_media($med, $sub)
+	protected function add_media($med, $sub)
 	{
 		$image = \Propeller\Instagram\Model_Image::query()
 			->where('instagram_id', $med->id)
@@ -121,24 +121,6 @@ class InstagramPoll
 
 		try
 		{
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $med->images->standard_resolution->url);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			$output = curl_exec($ch);
-			$content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-			curl_close($ch);	
-
-			if($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output))
-			{
-				// Handle access denied error
-				if($xml->Code == 'AccessDenied')
-				{
-					throw new ImageAccessDeindedException("Access denied to '" . $med->images->standard_resolution->url ."' This entry hasn't been saved to the DB.");
-				}
-
-				// Thrown an uknown error exception
-				throw new UknownInstagramError("Uknown error ({$xml->Code}): {$xml->Message}");
-			}
 
 			// Carry on..
 			if(!$image) {
@@ -151,9 +133,9 @@ class InstagramPoll
 				$image->accepted = $approval_status;
 			}
 
-			$image->thumb_img = $med->images->thumbnail->url;
-			$image->main_img = $med->images->standard_resolution->url;
-			$image->lowres_img = $med->images->low_resolution->url;
+			$image->thumb_img = $this->fetch_image($med->images->thumbnail->url, 'thumbnail');
+			$image->main_img = $this->fetch_image($med->images->standard_resolution->url, 'standard');
+			$image->low_res_img = $this->fetch_image($med->images->low_resolution->url, 'lowres');
 			$image->instagram_id = $med->id;
 			$image->author = $med->user->username;
 			$image->link = $med->link;
@@ -214,6 +196,38 @@ class InstagramPoll
 			\Log::error(sprintf("%s [tag = %s, id = %s]", $e->getMessage(), $sub->object_id, $med->id), __METHOD__);
 			\Cli::error("Unknown error: " . $e->getMessage());
 		}
+	}
+
+	protected function fetch_image($image_url, $image_type)
+	{
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $image_url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$output = curl_exec($ch);
+		$content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+		curl_close($ch);
+
+		if($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output))
+		{
+			// Handle access denied error
+			if($xml->Code == 'AccessDenied')
+			{
+				throw new ImageAccessDeindedException("Access denied to '" . $med->images->standard_resolution->url ."' This entry hasn't been saved to the DB.");
+			}
+
+			// Thrown an uknown error exception
+			throw new UknownInstagramError("Uknown error ({$xml->Code}): {$xml->Message}");
+		}
+
+		$save_folder = '/data/instagram/' . $image_type . '/';
+		$chunks = explode('/', $image_url);
+		$file_name = end($chunks);
+		$file_path = $save_folder . $file_name;
+		if( ! is_dir(DOCROOT. 'public'. $save_folder)) {
+			mkdir(DOCROOT . 'public' . $save_folder, 0777, true);
+		}
+		file_put_contents(DOCROOT . 'public' . $file_path, $output);
+		return $file_path;
 	}
 
 }
