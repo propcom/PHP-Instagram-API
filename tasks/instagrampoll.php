@@ -19,32 +19,26 @@ class InstagramPoll
 
 		$image_delete_count = 0;
 
-		foreach($subscriptions as $sub)
-		{
-			foreach($sub->images as $image)
-			{
+		foreach ($subscriptions as $sub) {
+			foreach ($sub->images as $image) {
 				$ch = curl_init();
 				curl_setopt($ch, CURLOPT_URL, $image->main_img);
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-				$output = curl_exec($ch);
+				curl_exec($ch);
 				$curl_info = curl_getinfo($ch);
-				curl_close($ch);					
+				curl_close($ch);
 
-				if($curl_info['http_code'] == 404)
-				{
+				if ($curl_info['http_code'] == 404) {
 					\Cli::error("Image is not accessible, going to delete now...");
 
-					try
-					{
+					try {
 						$image->delete();
 
 						// Show what image we've deleted
 						// and increment the count.
 						\Cli::write("Image {$image->main_img} deleted", "cyan");
 						$image_delete_count++;
-					}
-					catch(\Exception $e)
-					{
+					} catch (\Exception $e) {
 						// Log the error
 						\Log::error($e->getMessage(), __METHOD__);
 						\Cli::error("Unable to delete image: " . $e->getMessage());
@@ -81,35 +75,37 @@ class InstagramPoll
 			$query->where('object_id', $tag);
 		}
 
-		foreach($query->get() as $sub)
-		{
-			$tag = $instagram->getHashtag($sub->object_id);
-			$count = 0;
-			$params = [
-				'max_tag_id' => null,
-			];
+		foreach ($query->get() as $sub) {
+			if ($sub->object_id !== '') {
+				$tag    = $instagram->getHashtag($sub->object_id);
+				$count  = 0;
+				$params = [
+					'max_tag_id' => null,
+				];
 
-			do {
-				$media = $tag->getMedia($params);
-				foreach($media as $med) {
-					if ($this->add_media($med, $sub)) {
-						$count++;
+				do {
+					$media = $tag->getMedia($params);
+					foreach ($media as $med) {
+						if ($this->add_media($med, $sub)) {
+							$count++;
+						}
 					}
+
+					if ($get_all) {
+						$params['max_tag_id'] = $media->getNextMaxTagId();
+					}
+				} while ($params['max_tag_id']);
+
+				if ($count) {
+					$sub->last_image_received = time();
+					$sub->save();
 				}
 
-				if ($get_all) {
-					$params['max_tag_id'] = $media->getNextMaxTagId();
-				}
-			} while ($params['max_tag_id']);
-
-			if($count) {
-				$sub->last_image_received = time();
-				$sub->save();
+				\Log::info($count ? $count . ' updates for tag: ' . $sub->object_id : 'No updates for tag: ' . $sub->object_id,
+					__METHOD__);
+				\Cli::write($count ? $count . ' updates for tag: ' . $sub->object_id : 'No updates for tag: ' . $sub->object_id,
+					'green');
 			}
-
-			\Log::info($count ? $count.' updates for tag: '.$sub->object_id : 'No updates for tag: '.$sub->object_id, __METHOD__);
-			\Cli::write($count ? $count.' updates for tag: '.$sub->object_id : 'No updates for tag: '.$sub->object_id, 'green');
-
 		}
 	}
 
@@ -119,11 +115,9 @@ class InstagramPoll
 			->where('instagram_id', $med->id)
 			->get_one();
 
-		try
-		{
-
+		try {
 			// Carry on..
-			if(!$image) {
+			if (!$image) {
 				$image = \Propeller\Instagram\Model_Image::forge();
 
 				$approval_status = 'unsorted';
@@ -146,52 +140,39 @@ class InstagramPoll
 			$image->posted_at = $med->getCreatedTime();
 
 			//Loop Thorugh Tags and store each one
-			foreach($med->tags as $tag)
-			{
+			foreach ($med->tags as $tag) {
 				//Check Tag Existance
 				$tag_model = \Propeller\Instagram\Model_Tag::query()->where('tag_name', $tag)->get_one();
-				if ( !$tag_model )
-				{
+				if (!$tag_model) {
 					//Create That Tag if it doesnt already exist
 					$tag_model = \Propeller\Instagram\Model_Tag::forge();
 					$tag_model->tag_name = $tag;
 					$tag_model->save();
 				}
 
-				//Save Tags 
+				//Save Tags
 				$image->tags[] = $tag_model;
 
 			}
 
 			$image->save();
-
 			return true;
-
-		}
-		catch (ImageAccessDeindedException $e)
-		{
+		} catch (ImageAccessDeindedException $e) {
 			\Cli::write("Attempting to delete image", "cyan");
-
-			if($image)
-			{
+			if ($image) {
 				$obj = \Propeller\Instagram\Model_Image::find($image->id);
 
 				// Delete the image as we no longer have access to it!
-				try
-				{
+				try {
 					$obj->delete();
 
 					\Cli::write("Image deleted", "green");
-				}
-				catch(\Exception $e)
-				{
+				} catch(\Exception $e) {
 					\Log::error(sprintf("Unable to delete image: %s [tag = %s, id = %s]", $e->getMessage(), $sub->object_id, $med->id), __METHOD__);
 					\Cli::error("Unable to delete image: " . $e->getMessage());
 				}
 			}
-		}
-		catch(\Exception $e)
-		{
+		} catch (\Exception $e) {
 			// Some other error
 			\Log::error(sprintf("%s [tag = %s, id = %s]", $e->getMessage(), $sub->object_id, $med->id), __METHOD__);
 			\Cli::error("Unknown error: " . $e->getMessage());
@@ -207,23 +188,21 @@ class InstagramPoll
 		$content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 		curl_close($ch);
 
-		if($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output))
-		{
+		if ($content_type == 'application/xml' and $xml = new \SimpleXMLElement($output)) {
 			// Handle access denied error
-			if($xml->Code == 'AccessDenied')
-			{
+			if ($xml->Code == 'AccessDenied') {
 				throw new ImageAccessDeindedException("Access denied to '" . $med->images->standard_resolution->url ."' This entry hasn't been saved to the DB.");
 			}
 
-			// Thrown an uknown error exception
-			throw new UknownInstagramError("Uknown error ({$xml->Code}): {$xml->Message}");
+			// Thrown an unknown error exception
+			throw new UnknownInstagramError("Uknown error ({$xml->Code}): {$xml->Message}");
 		}
 
 		$save_folder = '/data/instagram/' . $image_type . '/';
 		$chunks = explode('/', $image_url);
 		$file_name = end($chunks);
 		$file_path = $save_folder . $file_name;
-		if( ! is_dir(DOCROOT. 'public'. $save_folder)) {
+		if (! is_dir(DOCROOT. 'public'. $save_folder)) {
 			mkdir(DOCROOT . 'public' . $save_folder, 0777, true);
 		}
 		file_put_contents(DOCROOT . 'public' . $file_path, $output);

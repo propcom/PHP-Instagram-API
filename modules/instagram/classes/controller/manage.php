@@ -65,8 +65,6 @@ class Controller_Manage extends \Admin\Controller_Template
 
 		$this->template->title = 'Approve Images - '.$sub->alias;
 		$this->template->content = $view;
-
-
 	}
 
 	public function action_unsubscribe($id)
@@ -93,24 +91,26 @@ class Controller_Manage extends \Admin\Controller_Template
 			\Response::redirect('admin/instagram/manage/authenticate');
 		}
 
-		if(\Input::post()) {
-			try {
-				$sub = \Propeller\Instagram\Model_Subscription::query()
-					->where('object_id', \Input::post('tag'))
-					->get_one();
+		if (\Input::post()) {
+			if (\Input::post('tag') !== '') {
+				try {
+					$sub = \Propeller\Instagram\Model_Subscription::query()
+						->where('object_id', \Input::post('tag'))
+						->get_one();
 
-				if (!$sub) {
-					$sub = \Propeller\Instagram\Model_Subscription::forge(array(
-					 	'guid' => uniqid(),
-					 	'alias' => \Input::post('name'),
-					 	'params' => '',
-					 	'object_id' => \Input::post('tag'),
-					 	'status' => 'Live',
-					));
-					$sub->save();
+					if (! $sub) {
+						$sub = \Propeller\Instagram\Model_Subscription::forge(array(
+							'guid'      => uniqid(),
+							'alias'     => \Input::post('name'),
+							'params'    => '',
+							'object_id' => \Input::post('tag'),
+							'status'    => 'Live',
+						));
+						$sub->save();
+					}
+				} catch (\Exception $e) {
+					\Session::set_flash('error', 'Error adding subscription: ' . $e->getMessage());
 				}
-			} catch (\Exception $e) {
-				\Session::set_flash('error', 'Error adding subscription: '.$e->getMessage());
 			}
 		}
 
@@ -129,11 +129,11 @@ class Controller_Manage extends \Admin\Controller_Template
 		$view = \View::forge('authenticate');
 
 		// Check we have the configs we need
-		if ( !$auth_config['client_id'] || !$auth_config['redirect_uri'] ) {
+		if (!$auth_config['client_id'] || !$auth_config['redirect_uri']) {
 			$view->set('error', 'Please make sure Instagram configuration is filled in correctly');
 		}
 		// If they have clicked the "authenticate" button
-		elseif ( \Input::get('go') !== null ) {
+		elseif (\Input::get('go') !== null) {
 			$auth = new \Instagram\Auth($auth_config);
 			$auth->authorize();
 		}
